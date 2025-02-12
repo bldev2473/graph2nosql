@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'networkx==3.3',
-        'matplotlib==3.9.1',
+        'matplotlib==3.10.0',
         'graspologic',
         'numpy',
         'firebase-admin==6.5.0',
