@@ -17,14 +17,13 @@ from base.operations import NoSQLKnowledgeGraph
 class FirestoreKG(NoSQLKnowledgeGraph):
     """Firestore database operations implementation class"""
 
-    def __init__(self,
-                 gcp_project_id: str,
-                 gcp_credential_file: str,
-                 firestore_db_id: str,
-                 node_collection_id: str,
-                 edges_collection_id: str,
-                 community_collection_id: str
-                 ) -> None:
+    def __init__(
+        self,
+        firestore_client,
+        node_collection_id: str,
+        edges_collection_id: str,
+        community_collection_id: str
+    ) -> None:
         """
         Initializes the FirestoreKG object.
 
@@ -35,25 +34,50 @@ class FirestoreKG(NoSQLKnowledgeGraph):
         """
         super().__init__()
 
+        self.db = firestore_client
+        self.node_coll_id = node_collection_id
+        self.edges_coll_id = edges_collection_id
+        self.community_coll_id = community_collection_id
+
+    @classmethod
+    def from_app(
+        cls,
+        gcp_project_id: str,
+        gcp_credential_file: str,
+        firestore_db_id: str,
+        node_collection_id: str,
+        edges_collection_id: str,
+        community_collection_id: str
+    ):
+        """
+        Args:
+            project_id (str): The Google Cloud project ID.
+            database_id (str): The ID of the Firestore database.
+            collection_name (str): The name of the collection to store the KG.
+        """
         if not firebase_admin._apps:
             credentials = firebase_admin.credentials.Certificate(
                 gcp_credential_file
             )
             app = firebase_admin.initialize_app(credentials)
+            
+        credentials, gcp_project_id = google.auth.load_credentials_from_file(
+            gcp_credential_file
+        )
+        
+        db = firestore.Client(
+            project=gcp_project_id,  # type: ignore
+            credentials=credentials,
+            database=firestore_db_id,
+        )
 
-        self.credentials, self.project_id = google.auth.load_credentials_from_file(
-            gcp_credential_file)
-
-        self.db = firestore.Client(project=gcp_project_id,  # type: ignore
-                                   credentials=self.credentials,
-                                   database=firestore_db_id)
-
-        self.gcp_project_id = gcp_project_id
-        self.database_id = firestore_db_id
-        self.node_coll_id = node_collection_id
-        self.edges_coll_id = edges_collection_id
-        self.community_coll_id = community_collection_id
-
+        return cls(
+            firestore_client=db,
+            node_collection_id=node_collection_id,
+            edges_collection_id=edges_collection_id,
+            community_collection_id=community_collection_id,
+        )
+    
     def add_node(self, node_uid: str, node_data: NodeData) -> None:
         """Adds an node to the knowledge graph."""
         doc_ref = self.db.collection(self.node_coll_id).document(node_uid)
