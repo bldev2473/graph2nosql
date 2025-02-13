@@ -7,7 +7,7 @@ setup(
     install_requires=[
         'networkx==3.3',
         'matplotlib==3.10.0',
-        'graspologic',
+        'graspologic==3.4.1',
         'numpy',
         'firebase-admin==6.5.0',
         'python-dotenv==1.0.1',
